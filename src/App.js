@@ -1,78 +1,50 @@
-
 import React, { useState } from 'react';
+import CurrentWeather from './features/CurrentWeather';
+import FavoritesTab from './features/FavoritesTab';
+import './index.css'
 
 const App = () => {
-  const [city, setCity] = useState('');
-  const [weatherData, setWeatherData] = useState(null);
-  const [error, setError] = useState(null);
+  const [favoriteCities, setFavoriteCities] = useState([]);
 
-  const fetchWeatherData = async () => {
+  const addToFavorites = async (newFavorite) => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/weather', {
+      const response = await fetch('http://127.0.0.1:5000/api/add-favorite', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ city }),
+        body: JSON.stringify(newFavorite),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
-        setWeatherData(data);
-        setError(null);
+        console.log(data.message);
+        setFavoriteCities([...favoriteCities, newFavorite]);
       } else {
-        setError(data.error || 'Error fetching weather data');
-        setWeatherData(null);
+        console.error(data.error || 'Error adding to favorites');
       }
     } catch (error) {
-      setError('Error fetching weather data');
-      setWeatherData(null);
+      console.error('Error adding to favorites:', error.message);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    fetchWeatherData();
+  const [selectedCity, setSelectedCity] = useState(null);
+
+  const handleDetails = (cityName) => {
+    // Implement the logic to fetch details for the cityName
+    console.log(`Fetching details for ${cityName}`);
+    setSelectedCity(cityName);
   };
 
-  return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-3xl font-semibold mb-4">Weather App</h1>
-
-      <form onSubmit={handleSubmit} className="mb-4">
-        <label htmlFor="city" className="mr-2">Enter City:</label>
-        <input
-          type="text"
-          id="city"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="border rounded p-2"
-        />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 ml-2 rounded">Get Weather</button>
-      </form>
-
-      {error && <p className="text-red-500">{error}</p>}
-
-      {weatherData && (
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Weather in {weatherData.name}, {weatherData.sys.country}</h2>
-          <p>Temperature: {(weatherData.main.temp - 273.15).toFixed(1)} &#8451;</p>
-          <p>Humidity: {weatherData.main.humidity}%</p>
-          <p>Weather: {weatherData.weather[0].description}</p>
-          <p>Cloudiness: {weatherData.clouds.all}%</p>
-          <p>Visibility: {(weatherData.visibility/10000).toFixed(1)} km</p>
-          <p>Wind Speed: {(weatherData.wind.speed*3.6).toFixed(0)} km/h</p>
-            {weatherData.weather[0].icon && (
-              <img
-                src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}.png`}
-                alt="Weather Icon"
-              />
-            )}
-        </div>
-      )}
+  return(
+    <div className='flex'>
+      <FavoritesTab favoriteCities={favoriteCities} setFavoriteCities={setFavoriteCities} onDetails = {handleDetails}/>
+      <div className='flex-grow p-4 bg-white'>
+        <CurrentWeather onAddToFavorites={ addToFavorites } setSelectedCity= {setSelectedCity}/>
+      </div>
     </div>
-  );
+  )
 };
 
 export default App;
